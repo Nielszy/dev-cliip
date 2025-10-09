@@ -31,7 +31,7 @@ Why run dev-cliip on a Lima VM and not use Colima or alternatives to run all dev
 
 ## Warning
 
-The dev-cliip environment is designed as a playground for development and experimentation. Parts of dev-cliip should **never** be used in production environments without making the necessary adjustments. You must perform thorough due diligence and testing before deploying any component in a production environment.
+The dev-cliip environment is designed as a playground for development and experimentation. Parts of dev-cliip should **never** be used in production environments without making the necessary adjustments. You must perform thorough due diligence and testing before deploying any component in a production environment. Never commit cleartext API tokens or passwords to your repository.
 
 Specifically, never reuse any component of this project in a real-world environment without:
 
