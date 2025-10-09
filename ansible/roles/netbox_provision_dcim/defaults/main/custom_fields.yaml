@@ -1,0 +1,17 @@
+---
+custom_field_choice_sets:
+  - name: monitoring_tools
+    extra_choices:
+      - gnmic, gnmic
+      - prometheus-blackbox-exporter, prometheus-blackbox-exporter
+      - prometheus-snmp-exporter, prometheus-snmp-exporter
+      - telegraf, telegraf
+
+custom_fields:
+  - name: monitored_with
+    group_name: Monitoring
+    type: multiselect
+    required: true
+    choice_set: monitoring_tools
+    object_types:
+      - dcim.device

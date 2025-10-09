@@ -1,0 +1,8 @@
+---
+controller:
+  progressDeadlineSeconds: 600
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30010
+      https: 30011

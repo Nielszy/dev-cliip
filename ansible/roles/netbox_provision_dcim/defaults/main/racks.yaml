@@ -1,0 +1,8 @@
+---
+racks:
+  - name: A
+    site: Lab
+    location: Lab
+  - name: B
+    site: Lab
+    location: Lab

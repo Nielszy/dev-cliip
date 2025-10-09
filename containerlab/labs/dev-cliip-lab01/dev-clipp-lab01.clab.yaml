@@ -1,0 +1,24 @@
+---
+name: dev-cliip-lab01
+
+mgmt:
+  ipv4-subnet: 172.16.103.0/24
+
+topology:
+  kinds:
+    arista_ceos:
+      image: ceos-arm-lab:4.34.3M
+      env:
+        CLAB_MGMT_VRF: MGMT
+
+  nodes:
+    SW01:
+      kind: arista_ceos
+      mgmt-ipv4: 172.16.103.10
+    SW02:
+      kind: arista_ceos
+      mgmt-ipv4: 172.16.103.20
+
+  links:
+    - endpoints: ["SW01:eth1", "SW02:eth1"]
+    - endpoints: ["SW01:eth2", "SW02:eth2"]

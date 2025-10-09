@@ -1,0 +1,17 @@
+---
+vmType: vz
+memory: 20GiB
+cpus: 6
+images:
+  - location: https://cloud.debian.org/images/cloud/trixie/20250924-2245/debian-13-genericcloud-arm64-20250924-2245.qcow2
+    arch: aarch64
+networks:
+   - lima: user-v2
+mounts:
+  # Adjust the `location` path to where you cloned your forked dev-cliip repo.
+  - location: "/Users/USER/dev-cliip"
+    mountPoint: "/home/USER.linux/dev-cliip"
+    writable: true
+  # Adjust the `location` path to where your cEOS ARM image is stored.
+  - location: "/Users/USER/container-images"
+    mountPoint: "/home/USER.linux/container-images"

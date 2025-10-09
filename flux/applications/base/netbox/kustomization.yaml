@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - netbox-namespace.yaml
+  - postgresql/netbox-postgres-env-sealedSecret.yaml
+  - postgresql/netbox-postgres-service.yaml
+  - postgresql/netbox-postgres-statefulSet.yaml
+  - redis/redis-service.yaml
+  - redis/redis-cache-service.yaml
+  - redis/redis-env-sealedSecret.yaml
+  - redis/redis-cache-env-sealedSecret.yaml
+  - redis/redis-statefulSet.yaml
+  - redis/redis-cache-statefulSet.yaml
+  - netbox/netbox-env-sealedSecret.yaml
+  - netbox/netbox-config-configMap.yaml
+  - netbox/netbox-overrides-configMap.yaml
+  - netbox/netbox-extra-config-sealedSecret.yaml
+  - netbox/netbox-media-files-persistentVolumeClaim.yaml
+  - netbox/netbox-scripts-persistentVolumeClaim.yaml
+  - netbox/netbox-service.yaml
+  - netbox/netbox-ingress.yaml
+  - netbox/netbox-worker-deployment.yaml
+  - netbox/netbox-deployment.yaml

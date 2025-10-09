@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbox
+  namespace: netbox
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: netbox.dev-cliip.test
+      http:
+        paths:
+          - backend:
+              service:
+                name: netbox
+                port:
+                  number: 80
+            path: /
+            pathType: ImplementationSpecific

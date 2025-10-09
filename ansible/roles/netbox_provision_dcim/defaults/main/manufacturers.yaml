@@ -1,0 +1,4 @@
+---
+manufacturers:
+  - name: Arista
+    state: present

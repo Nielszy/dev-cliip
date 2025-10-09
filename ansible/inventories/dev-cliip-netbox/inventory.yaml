@@ -1,0 +1,9 @@
+---
+plugin: netbox.netbox.nb_inventory
+api_endpoint: "http://netbox.dev-cliip.test:8080"
+token:
+interfaces: false
+use_extra_vars: true
+site_data: false
+fetch_all: false
+services: false

@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox
+  namespace: netbox
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: netbox

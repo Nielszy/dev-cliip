@@ -1,0 +1,26 @@
+---
+# Changed the number of operator pods from the default value (2) to 1 because we run a single node K8s cluster.
+operator:
+  replicas: 1
+ipam:
+  operator:
+    clusterPoolIPv4PodCIDRList: ["10.123.0.0/16"]
+    clusterPoolIPv4MaskSize: 23
+hubble:
+  relay:
+    # -- Enable Hubble Relay (requires hubble.enabled=true)
+    enabled: true
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+    trustCRDsExist: true
+# -- Grafana dashboards for cilium-agent
+# grafana can import dashboards based on the label and value
+# ref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards
+dashboards:
+  enabled: true
+gatewayAPI:
+  # -- Enable support for Gateway API in cilium
+  # This will automatically set enable-envoy-config as well.
+  enabled: true

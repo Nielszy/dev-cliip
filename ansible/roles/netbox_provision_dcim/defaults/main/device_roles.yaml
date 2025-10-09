@@ -1,0 +1,5 @@
+---
+device_roles:
+  - name: Switch
+    color: FFDB4E
+    state: present

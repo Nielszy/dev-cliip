@@ -1,0 +1,14 @@
+---
+ip_addresses:
+  - address: 172.16.103.10/24
+    tenant: dev-cliip
+    assigned_object:
+      device: SW01
+      name: Management0
+    vrf: MGMT
+  - address: 172.16.103.20/24
+    tenant: dev-cliip
+    assigned_object:
+      device: SW02
+      name: Management0
+    vrf: MGMT

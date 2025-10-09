@@ -1,0 +1,8 @@
+---
+sites:
+  - name: Lab
+    region: Virtual
+    # physical_address:
+    # tenant:
+    time_zone: Europe/Amsterdam
+    state: present

@@ -1,0 +1,87 @@
+---
+- name: Create RIRs.
+  netbox.netbox.netbox_rir:
+    data:
+      name: "{{ rir.name }}"
+    state: "{{ rir.state | default('present') }}"
+  loop: "{{ rirs }}"
+  loop_control:
+    loop_var: rir
+    label: "{{ rir.name }}"
+  tags:
+    - netbox_rir
+
+- name: Create ASNs.
+  netbox.netbox.netbox_asn:
+    data:
+      asn: "{{ asn.asn }}"
+      rir: "{{ asn.rir | default(omit) }}"
+    state: "{{ asn.state | default('present') }}"
+  loop: "{{ asns }}"
+  when: asns is defined
+  loop_control:
+    loop_var: asn
+    label: "ASN: {{ asn.asn }}"
+  tags:
+    - netbox_asn
+
+- name: Create VRFs.
+  netbox.netbox.netbox_vrf:
+    data:
+      name: "{{ vrf.name }}"
+      enforce_unique: "{{ vrf.enforce_unique | default(false) }}"
+      tenant: "{{ vrf.tenant }}"
+    state: "{{ vrf.state | default('present') }}"
+  loop: "{{ vrfs }}"
+  loop_control:
+    loop_var: vrf
+  tags:
+    - netbox_vrf
+
+- name: Create prefixes.
+  netbox.netbox.netbox_prefix:
+    data:
+      prefix: "{{ prefix.prefix }}"
+      family: "{{ prefix.family }}"
+      tenant: "{{ prefix.tenant }}"
+      is_pool: "{{ prefix.is_pool | default(false) }}"
+      vrf: "{{ prefix.vrf | default('default') }}"
+      vlan: "{{ prefix.vlan | default(omit) }}"
+      description: "{{ prefix.description | default(omit) }}"
+    state: "{{ prefix.state | default('present') }}"
+  loop: "{{ prefixes }}"
+  loop_control:
+    loop_var: prefix
+  tags:
+    - netbox_prefix
+
+- name: Create IP addresses that belong to device interfaces.
+  netbox.netbox.netbox_ip_address:
+    data:
+      address: "{{ ip_address.address }}"
+      assigned_object: "{{ {'name': ip_address.assigned_object.name, 'device': ip_address.assigned_object.device} }}"
+      tenant: "{{ ip_address.tenant }}"
+      vrf: "{{  ip_address.vrf | default('default') }}"
+      status: "{{ ip_address.status | default('Active') }}"
+      role: "{{ interface.1.ip_addresses[0].role | default(omit) }}"
+      description: "{{ interface.1.ip_addresses[0].description | default(omit) }}"
+    state: "{{ interface.state | default('present') }}"
+  loop: "{{ ip_addresses }}"
+  loop_control:
+    loop_var: ip_address
+  tags:
+    - netbox_ip_address
+
+- name: Set primary and out-of-band IP address for switches.
+  netbox.netbox.netbox_device:
+    data:
+      name: "{{ primary_ip.assigned_object.device }}"
+      primary_ip4: "{{ primary_ip.address }}"
+      oob_ip: "{{ primary_ip.address }}"
+    state: "{{ primary_ip.state | default('present') }}"
+  when: "'management' in primary_ip.assigned_object.name | lower and 'sw' in primary_ip.assigned_object.device | lower"
+  loop: "{{ ip_addresses }}"
+  loop_control:
+    loop_var: primary_ip
+  tags:
+    - netbox_primary_ip

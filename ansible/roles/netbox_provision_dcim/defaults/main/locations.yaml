@@ -1,0 +1,5 @@
+---
+locations:
+  - name: Lab
+    site: Lab
+    tenant: dev-cliip

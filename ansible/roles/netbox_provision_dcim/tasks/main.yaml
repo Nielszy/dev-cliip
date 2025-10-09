@@ -1,0 +1,228 @@
+---
+- name: Create regions.
+  netbox.netbox.netbox_region:
+    data:
+      name: "{{ region.name }}"
+      parent_region: "{{ region.parent_region | default(omit) }}"
+    state: "{{ region.state | default('present') }}"
+  loop: "{{ regions }}"
+  loop_control:
+    loop_var: region
+    label: "{{ region.name }}"
+  tags:
+    - netbox_region
+
+- name: Create tenants.
+  netbox.netbox.netbox_tenant:
+    data:
+      name: "{{ tenant.name }}"
+    state: "{{ tenant.state | default('present') }}"
+  loop: "{{ tenants }}"
+  loop_control:
+    loop_var: tenant
+    label: "{{ tenant['name'] }}"
+  tags:
+    - netbox_tenant
+
+- name: Create sites.
+  netbox.netbox.netbox_site:
+    data:
+      name: "{{ site.name }}"
+      region: "{{ site.region }}"
+      physical_address: "{{ site.physical_address | default(omit) }}"
+      facility: "{{ site.facility | default(omit) }}"
+      tenant: "{{ site.tenant | default(omit) }}"
+      time_zone: "{{ site.time_zone }}"
+      description: "{{ site.description | default(omit) }}"
+    state: "{{ site.state | default('present') }}"
+  loop: "{{ sites }}"
+  loop_control:
+    loop_var: site
+    label: "{{ site.name }} in regio: {{ site.region }}"
+  tags:
+    - netbox_site
+
+- name: Create locations.
+  netbox.netbox.netbox_location:
+    data:
+      name: "{{ location.name }}"
+      # We need this inline Jinja templating because we use identical parent location values but the added site value is what makes it unique.
+      parent_location: "{{ {'name': location.parent_location, 'site': location.site} if location.parent_location is defined else omit }}"
+      site: "{{ location.site }}"
+      tenant: "{{ location.tenant }}"
+    state: "{{ site.state | default('present') }}"
+  loop: "{{ locations }}"
+  loop_control:
+    loop_var: location
+    label: "{{ location.name }}"
+  tags:
+    - netbox_location
+
+- name: Create racks.
+  netbox.netbox.netbox_rack:
+    data:
+      name: "{{ rack.name }}"
+      # We need this inline Jinja templating because more than one result is returned for location.
+      location: "{{ {'name': rack.location, 'site': rack.site} }}"
+      site: "{{ rack.site }}"
+      u_height: "{{ rack.u_height | default('42') }}"
+    state: "{{ rack.state | default('present') }}"
+  loop: "{{ racks }}"
+  loop_control:
+    loop_var: rack
+    label: "{{ rack.name }}"
+  tags:
+    - netbox_rack
+
+- name: Create manufacturers.
+  netbox.netbox.netbox_manufacturer:
+    data:
+      name: "{{ manufacturer.name }}"
+    state: "{{ manufacturer.state | default('present') }}"
+  loop: "{{ manufacturers }}"
+  loop_control:
+    loop_var: manufacturer
+    label: "{{ manufacturer['name'] }}"
+  tags:
+    - netbox_manufacturer
+
+- name: Create platforms.
+  netbox.netbox.netbox_platform:
+    data:
+      name: "{{ platform.name }}"
+    state: "{{ platform.state | default('present') }}"
+  loop: "{{ platforms }}"
+  loop_control:
+    loop_var: platform
+    label: "{{ platform['name'] }}"
+  tags:
+    - netbox_platform
+
+- name: Add custom field choice sets.
+  netbox.netbox.netbox_custom_field_choice_set:
+    data:
+      name: "{{ custom_field_choice_set.name }}"
+      extra_choices: "{{ custom_field_choice_set.extra_choices }}"
+    state: "{{ custom_field_choice_set.state | default('present') }}"
+  loop: "{{ custom_field_choice_sets }}"
+  loop_control:
+    loop_var: custom_field_choice_set
+    label: "{{ custom_field_choice_set.name }}"
+  tags:
+    - netbox_custom_field_choice_set
+
+- name: Add custom fields.
+  netbox.netbox.netbox_custom_field:
+    data:
+      name: "{{ custom_field.name }}"
+      group_name: "{{ custom_field.group_name | default(omit) }}"
+      type: "{{ custom_field.type }}"
+      required: "{{ custom_field.required }}"
+      object_types: "{{ custom_field.object_types }}"
+      ui_visibility: "{{ custom_field.ui_visibility | default(omit) }}"
+      choice_set: "{{ custom_field.choice_set | default(omit) }}"
+    state: "{{ custom_field.state | default('present') }}"
+  loop: "{{ custom_fields }}"
+  loop_control:
+    loop_var: custom_field
+    label: "{{ custom_field.name }}"
+  tags:
+    - netbox_custom_field
+
+- name: Create device roles.
+  netbox.netbox.netbox_device_role:
+    data:
+      name: "{{ device_role.name }}"
+      color: "{{ device_role.color }}"
+    state: "{{ device_role.state | default('present') }}"
+  loop: "{{ device_roles }}"
+  loop_control:
+    loop_var: device_role
+    label: "{{ device_role.name }}"
+  tags:
+    - netbox_device_role
+
+- name: Create device types.
+  netbox.netbox.netbox_device_type:
+    data:
+      model: "{{ device_type.model }}"
+      manufacturer: "{{ device_type.manufacturer }}"
+      default_platform: "{{ device_type.default_platform | default(omit) }}"
+      is_full_depth: "{{ device_type.full_depth }}"
+      airflow: "{{ device_type.airflow | default(omit) }}"
+      part_number: "{{ device_type.part_number }}"
+      subdevice_role: "{{ device_type.subdevice_role | default(omit) }}"
+      description: "{{ device_type.description | default(omit) }}"
+      comments: "{{ device_type.comments | default(omit) }}"
+      weight: "{{ device_type.weight | default(omit) }}"
+      weight_unit: "{{ device_type.weight_unit | default(omit) }}"
+      u_height: "{{ device_type.u_height | default(omit) }}"
+      custom_fields: "{{ device_type.custom_fields | default(omit) }}"
+    state: "{{ device_type.state | default('present') }}"
+  loop: "{{ device_types }}"
+  loop_control:
+    loop_var: device_type
+    label: "{{ device_type.manufacturer }} {{ device_type['model'] }}"
+  tags:
+    - netbox_device_type
+
+- name: Create interface templates for device types.
+  netbox.netbox.netbox_device_interface_template:
+    data:
+      device_type: "{{ interface.0.model }}"
+      name: "{{ interface.1.name }}"
+      mgmt_only: "{{ interface.1.mgmt_only | default('false') }}"
+      type: "{{ interface.1.type }}"
+      description: "{{ interface.1.description | default(omit) }}"
+      poe_mode: "{{ interface.1.poe_mode | default(omit) }}"
+      poe_type: "{{ interface.1.poe_type | default(omit) }}"
+      enabled: "{{ interface.1.enabled | default('false') }}"
+    state: "{{ interface.1.state | default('present') }}"
+  loop: "{{ device_types | subelements('interface_templates', skip_missing=true) }}"
+  loop_control:
+    loop_var: interface
+    label: "{{ interface.1.name }} for {{ interface.0.model }}"
+  tags:
+    - netbox_device_interface_template
+
+- name: Create console templates for device types.
+  netbox.netbox.netbox_console_port_template:
+    data:
+      device_type: "{{ console.0.model }}"
+      name: "{{ console.1.name }}"
+      type: "{{ console.1.type }}"
+    state: "{{ console.1.state | default('present') }}"
+  loop: "{{ device_types | subelements('console_templates', skip_missing=true) }}"
+  loop_control:
+    loop_var: console
+    label: "{{ console.1.name }} port for {{ console.0.model }}"
+  tags:
+    - netbox_console_port_template
+
+- name: Create console server port templates for device types.
+  netbox.netbox.netbox_console_server_port_template:
+    data:
+      device_type: "{{ console_server_port.0.model }}"
+      name: "{{ console_server_port.1.name }}"
+      type: "{{ console_server_port.1.type }}"
+    state: "{{ console_server_port.1.state | default('present') }}"
+  loop: "{{ device_types | subelements('console_server_port_templates', skip_missing=true) }}"
+  loop_control:
+    loop_var: console_server_port
+    label: "{{ console_server_port.1.name }} port for {{ console_server_port.0.model }}"
+  tags:
+    - netbox_console_port_template
+
+- name: Include the device creation task file.
+  ansible.builtin.include_tasks:
+    file: devices.yaml
+  tags:
+    - never
+    - netbox_devices
+
+- name: Include the cable creation task file.
+  ansible.builtin.include_tasks:
+    file: cables.yaml
+  tags:
+    - never
+    - netbox_cables

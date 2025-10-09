@@ -1,0 +1,2 @@
+---
+all_devices: "{{ dev_cliip_lab01_devices }}"

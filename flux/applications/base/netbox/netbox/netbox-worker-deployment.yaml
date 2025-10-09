@@ -1,0 +1,131 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: netbox-worker
+  name: netbox-worker
+  namespace: netbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netbox-worker
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: netbox-worker
+      namespace: netbox
+      labels:
+        app.kubernetes.io/name: netbox-worker
+    spec:
+      enableServiceLinks: false
+      restartPolicy: Always
+      initContainers:
+        - name: wait-for-dependency
+          image: alpine/curl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for NetBox pod to be healthy..."
+              TARGET_SERVICE="netbox"
+              TARGET_NAMESPACE="netbox"
+              HEALTH_CHECK_URL="http://$TARGET_SERVICE.$TARGET_NAMESPACE.svc.cluster.local/api/status/"
+              HOSTNAME="netbox.dev-cliip.test"
+
+              until nslookup $TARGET_SERVICE.$TARGET_NAMESPACE.svc.cluster.local; do
+                echo "Waiting for $TARGET_SERVICE service to be available..."
+                sleep 5
+              done
+
+              # Wait for health check to pass consistently for 30 seconds
+              CONSECUTIVE_HEALTHY_CHECKS=0
+              REQUIRED_HEALTHY_CHECKS=6
+
+              while [ $CONSECUTIVE_HEALTHY_CHECKS -lt $REQUIRED_HEALTHY_CHECKS ]; do
+                if curl -f -s --connect-timeout 2 --max-time 10 -H "Host: $HOSTNAME" $HEALTH_CHECK_URL > /dev/null 2>&1; then
+                  CONSECUTIVE_HEALTHY_CHECKS=$((CONSECUTIVE_HEALTHY_CHECKS + 1))
+                  echo "Health check passed ($CONSECUTIVE_HEALTHY_CHECKS/$REQUIRED_HEALTHY_CHECKS)"
+                else
+                  CONSECUTIVE_HEALTHY_CHECKS=0
+                  echo "Health check failed, resetting counter"
+                fi
+                sleep 5
+              done
+
+              echo "The netbox pod has been healthy for 30 seconds. We can now start the netbox-worker pod..."
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsGroup: 101
+            runAsUser: 101
+      containers:
+        - name: netbox-worker
+          envFrom:
+            - secretRef:
+                name: netbox-env
+          image: ghcr.io/nielszy/netbox-with-plugins:v4.4.2-3.4.1
+          args:
+            - /opt/netbox/venv/bin/python
+            - /opt/netbox/netbox/manage.py
+            - rqworker
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 101
+            runAsUser: 101
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+              cpu: 300m
+          volumeMounts:
+            - mountPath: /etc/netbox/config
+              name: netbox-config
+              readOnly: true
+            - name: netbox-media-files
+              mountPath: /opt/netbox/netbox/media
+            - name: netbox-scripts
+              mountPath: /opt/netbox/netbox/scripts
+      volumes:
+        - name: netbox-config
+          projected:
+            sources:
+              - configMap:
+                  name: netbox-config
+                  items:
+                    - key: configuration.py
+                      path: configuration.py
+                    - key: logging.py
+                      path: logging.py
+                    - key: plugins.py
+                      path: plugins.py
+              - secret:
+                  name: netbox-extra-config
+                  items:
+                    - key: extra.py
+                      path: extra.py
+        - name: netbox-media-files
+          persistentVolumeClaim:
+            claimName: netbox-media-files
+        - name: netbox-scripts
+          persistentVolumeClaim:
+            claimName: netbox-scripts
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault

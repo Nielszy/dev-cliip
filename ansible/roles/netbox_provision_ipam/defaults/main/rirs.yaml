@@ -1,0 +1,12 @@
+---
+rirs:
+  - name: RIPE NCC
+    state: present
+  - name: ARIN
+    state: present
+  - name: APNIC
+    state: present
+  - name: LACNIC
+    state: present
+  - name: AFRINIC
+    state: present

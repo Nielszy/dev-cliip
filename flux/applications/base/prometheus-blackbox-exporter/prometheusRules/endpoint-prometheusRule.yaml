@@ -1,0 +1,17 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: endpoint
+  namespace: monitoring
+spec:
+  groups:
+    - name: prometheus-blackbox-exporter
+      rules:
+        - alert: EndpointDownWarning
+          annotations:
+            description: "Endpoint {{ $labels.instance }} down."
+          expr: probe_success == 0
+          for: 2m
+          labels:
+            severity: warning

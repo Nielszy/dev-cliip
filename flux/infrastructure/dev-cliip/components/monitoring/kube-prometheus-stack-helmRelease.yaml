@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 12h
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 77.13.0
+      sourceRef:
+        kind: HelmRepository
+        name: kube-prometheus-stack
+        namespace: monitoring
+  upgrade:
+    crds: CreateReplace
+  install:
+    crds: CreateReplace
+  valuesFrom:
+  - kind: ConfigMap
+    name: base-kube-prometheus-stack-helm-values
+  - kind: ConfigMap
+    name: kube-prometheus-stack-helm-values

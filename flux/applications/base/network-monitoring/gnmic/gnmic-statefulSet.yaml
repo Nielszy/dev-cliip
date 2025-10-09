@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/name: gnmic
+  name: gnmic
+  namespace: network-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gnmic
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gnmic
+    spec:
+      containers:
+        - name: gnmic
+          args:
+            - subscribe
+            - --config
+            - /app/config.gnmic.yaml
+          image: ghcr.io/openconfig/gnmic
+          envFrom:
+            - secretRef:
+                name: gnmic-env
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          ports:
+            - containerPort: 9804
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 400Mi
+            requests:
+              cpu: 50m
+              memory: 200Mi
+          volumeMounts:
+            - mountPath: /app/config.gnmic.yaml
+              name: gnmic-config
+              subPath: config.gnmic.yaml
+            - mountPath: /app/targets.gnmic.yaml
+              name: gnmic-targets
+              subPath: targets.gnmic.yaml
+      volumes:
+        - secret:
+            defaultMode: 0644
+            secretName: gnmic-config
+          name: gnmic-config
+        - name: gnmic-targets
+          configMap:
+            defaultMode: 0644
+            name: gnmic-targets

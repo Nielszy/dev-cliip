@@ -1,0 +1,2 @@
+---
+all_cables: "{{ dev_cliip_lab01_cables }}"

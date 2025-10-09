@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gnmic-targets
+  namespace: network-monitoring
+data:
+  targets.gnmic.yaml: |
+    ---
+    # Now it's still empty.
