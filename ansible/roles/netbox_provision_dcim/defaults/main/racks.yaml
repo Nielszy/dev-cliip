@@ -1,6 +1,5 @@
 ---
 racks:
-  # DC0001
   - name: A
     site: Lab
     location: Lab
