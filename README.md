@@ -31,11 +31,13 @@ Why run dev-cliip on a Lima VM and not use Colima or alternatives to run all dev
 
 ## Warning
 
-The dev-cliip environment is designed as a playground for development and experimentation. Parts of dev-cliip should **never** be used in production environments without making the necessary adjustments. You must perform thorough due diligence and testing before deploying any component in a production environment. Never commit cleartext API tokens or passwords to your repository.
+**Never commit cleartext API tokens or passwords for cloud services, APIs, or production systems. The credentials in dev-cliip are local-only and cannot access anything outside your Mac.**
+
+The dev-cliip environment is designed as a playground for development and experimentation. Parts of dev-cliip should **never** be used in production environments without making the necessary adjustments. You must perform thorough due diligence and testing before deploying any component in a production environment.
 
 Specifically, never reuse any component of this project in a real-world environment without:
 
-- Rotating all passwords.
+- Rotating all passwords and tokens.
 - Encrypting secrets before storing them in GitHub (or other locations).
 - Enabling TLS on all endpoints.
 - Implementing proper authentication and authorization.
@@ -43,7 +45,7 @@ Specifically, never reuse any component of this project in a real-world environm
 
 ## How to start?
 
-Start by forking this project into a **private** repository called `dev-cliip`. Keep it private since you'll be committing encrypted API tokens to the repo.
+Start by forking this project into a **private** repository called `dev-cliip`. Keep it private since you'll be committing an encrypted API token to your repo. We will use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt credentials that will be committed to your forked repo.
 
 After that, create a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) called `dev-cliip` with the following permissions and grant the PAT access to your `dev-cliip` repository:
 
