@@ -1,0 +1,9 @@
+---
+prefixes:
+  - prefix: 172.16.103.0/24
+    family: 4
+    is_pool: false
+    vrf: MGMT
+    # vlan:
+    tenant: dev-cliip
+    # description:

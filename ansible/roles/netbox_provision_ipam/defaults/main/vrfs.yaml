@@ -1,0 +1,16 @@
+---
+vrfs:
+  - name: default
+    enforce_unique: false
+    tenant: dev-cliip
+    # rd:
+    # export_targets:
+    # import_targets:
+    # description:
+  - name: MGMT
+    enforce_unique: false
+    tenant: dev-cliip
+    # rd:
+    # export_targets:
+    # import_targets:
+    # description:

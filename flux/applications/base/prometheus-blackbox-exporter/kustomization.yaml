@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+configMapGenerator:
+  - name: base-prometheus-blackbox-exporter-helm-values
+    namespace: prometheus-blackbox-exporter
+    files:
+      - values.yaml=base-prometheus-blackbox-exporter-helm-values.yaml
+resources:
+  - prometheus-blackbox-exporter-namespace.yaml
+  - prometheus-blackbox-exporter-helmRepository.yaml
+  - prometheusRules/endpoint-prometheusRule.yaml
+  - ciliumNetworkPolicies/default-deny-inter-namespace.yaml
+  - ciliumNetworkPolicies/allow-all-dns.yaml
+  - ciliumNetworkPolicies/allow-prometheus-blackbox-exporter.yaml

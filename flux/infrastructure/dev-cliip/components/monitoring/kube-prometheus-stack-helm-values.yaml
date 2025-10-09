@@ -1,0 +1,39 @@
+---
+prometheus:
+  ingress:
+    enabled: true
+    hosts:
+      - prometheus.dev-cliip.test
+    ingressClassName: nginx
+  prometheusSpec:
+    retention: 1d
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+          selector:
+            matchLabels:
+              application: prometheus
+    externalLabels:
+      cluster: dev-cliip
+grafana:
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.dev-cliip.test
+    ingressClassName: nginx
+  defaultDashboardsTimezone: browser
+alertmanager:
+  ingress:
+    enabled: true
+    hosts:
+      - alertmanager.dev-cliip.test
+    ingressClassName: nginx
+cleanPrometheusOperatorObjectNames: true

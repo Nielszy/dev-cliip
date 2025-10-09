@@ -1,0 +1,24 @@
+---
+dev_cliip_lab01_cables:
+  - termination_a_type: dcim.interface
+    termination_a:
+      device: SW01
+      name: Ethernet1
+    termination_b_type: dcim.interface
+    termination_b:
+      device: SW02
+      name: Ethernet1
+    type: dac-passive
+    color: ff5722 # dark orange
+    status: connected
+  - termination_a_type: dcim.interface
+    termination_a:
+      device: SW01
+      name: Ethernet2
+    termination_b_type: dcim.interface
+    termination_b:
+      device: SW02
+      name: Ethernet2
+    type: dac-passive
+    color: ff5722 # dark orange
+    status: connected

@@ -1,0 +1,4 @@
+---
+regions:
+  - name: Virtual
+    state: present

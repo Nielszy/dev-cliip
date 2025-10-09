@@ -1,0 +1,22 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gnmic-gnmi-network-monitoring
+  namespace: network-monitoring
+spec:
+  endpoints:
+    - interval: 5s
+      port: gnmic-prometheus-metrics
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - regex: "container|job|service|namespace|instance|endpoint"
+          action: labeldrop
+  namespaceSelector:
+    matchNames:
+      - network-monitoring
+  jobLabel: gnmic-network-monitoring
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gnmic

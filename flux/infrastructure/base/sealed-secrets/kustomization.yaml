@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sealed-secrets
+configMapGenerator:
+  - name: base-sealed-secrets-helm-values
+    files:
+      - values.yaml=base-sealed-secrets-helm-values.yaml
+resources:
+  - sealed-secrets-helmRepository.yaml
+  - sealed-secrets.yaml

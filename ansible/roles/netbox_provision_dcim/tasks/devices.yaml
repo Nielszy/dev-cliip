@@ -1,0 +1,44 @@
+---
+- name: Add devices.
+  netbox.netbox.netbox_device:
+    data:
+      name: "{{ device.name }}"
+      device_type: "{{ device.device_type }}"
+      device_role: "{{ device.device_role }}"
+      airflow: "{{ device.airflow }}"
+      tenant: "{{ device.tenant }}"
+      rack: "{{ {'name': device.rack | default(omit), 'site': device.site | default(omit)} }}"
+      face: "{{ device.face | default(omit) }}"
+      site: "{{ device.site | default(omit) }}"
+      status: "{{ device.status | default(omit) }}"
+      comments: "{{ device.comments | default(omit) }}"
+      custom_fields: "{{ device.custom_fields | default(omit) }}"
+    state: "{{ device.state | default('present') }}"
+  loop: "{{ all_devices }}"
+  loop_control:
+    loop_var: device
+    label: "{{ device['name'] }} with device_type: {{ device.device_type }}"
+  tags:
+    - netbox_device
+
+- name: Add interfaces to devices.
+  netbox.netbox.netbox_device_interface:
+    data:
+      device: "{{ interface.0.name }}"
+      name: "{{ interface.1.name }}"
+      enabled: "{{ interface.1.enabled }}"
+      vrf: "{{ interface.1.vrf | default(omit) }}"
+      description: "{{ interface.1.description | default(omit) }}"
+      type: "{{ interface.1.type | default(omit) }}"
+      mtu: "{{ interface.1.mtu | default(omit) }}"
+      mode: "{{ interface.1.mode | default(omit) }}"
+      tagged_vlans: "{{ interface.1.tagged_vlans | default(omit) }}"
+      lag: "{{ interface.1.lag | default(omit) }}"
+      mgmt_only: "{{ interface.1.mgmt_only | default(omit) }}"
+    state: "{{ interface.1.state | default('present') }}"
+  loop: "{{ all_devices | subelements('interfaces', skip_missing=true) }}"
+  loop_control:
+    loop_var: interface
+    label: "{{ interface.1.name }} for {{ interface.0.name }}"
+  tags:
+    - netbox_device_interface

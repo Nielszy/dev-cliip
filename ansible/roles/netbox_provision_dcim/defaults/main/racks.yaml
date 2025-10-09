@@ -1,0 +1,9 @@
+---
+racks:
+  # DC0001
+  - name: A
+    site: Lab
+    location: Lab
+  - name: B
+    site: Lab
+    location: Lab

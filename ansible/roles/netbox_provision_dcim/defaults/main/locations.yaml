@@ -1,0 +1,6 @@
+---
+locations:
+  # Equinix AM4
+  - name: Lab
+    site: Lab
+    tenant: dev-cliip

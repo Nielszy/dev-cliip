@@ -1,0 +1,46 @@
+---
+# The interface type refers to the physical termination or port on the device.
+# Interfaces which employ a removable optic or similar transceiver should be defined to represent the type of transceiver in use, irrespective of the physical termination to that transceiver.
+dev_cliip_lab01_devices:
+  - name: SW01
+    device_type: cEOSarm-lab
+    device_role: Switch
+    airflow: rear-to-front
+    site: Lab
+    rack: A
+    face: rear
+    tenant: dev-cliip
+    state: present
+    custom_fields:
+      monitored_with:
+        - gnmic
+    interfaces:
+      - name: Management0
+        description: OOB_MANAGEMENT
+        enabled: true
+        vrf: MGMT
+      - name: Ethernet1
+        enabled: true
+      - name: Ethernet2
+        enabled: true
+  - name: SW02
+    device_type: cEOSarm-lab
+    device_role: Switch
+    airflow: rear-to-front
+    site: Lab
+    rack: A
+    face: rear
+    tenant: dev-cliip
+    state: present
+    custom_fields:
+      monitored_with:
+        - gnmic
+    interfaces:
+      - name: Management0
+        description: OOB_MANAGEMENT
+        enabled: true
+        vrf: MGMT
+      - name: Ethernet1
+        enabled: true
+      - name: Ethernet2
+        enabled: true

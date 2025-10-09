@@ -1,0 +1,22 @@
+---
+- name: Add cables.
+  netbox.netbox.netbox_cable:
+    data:
+      termination_a: "{{ cable.termination_a }}"
+      termination_a_type: "{{ cable.termination_a_type }}"
+      termination_b: "{{ cable.termination_b }}"
+      termination_b_type: "{{ cable.termination_b_type }}"
+      type: "{{ cable.type }}"
+      color: "{{ cable.color }}"
+      label: "{{ cable.label | default(omit) }}"
+      length: "{{ cable.length | default(omit) }}"
+      length_unit: "{{ cable.length_unit | default(omit) }}"
+      description: "{{ cable.description | default(omit) }}"
+      status: "{{ cable.status | default('connected') }}"
+    state: present
+  loop: "{{ all_cables }}"
+  loop_control:
+    loop_var: cable
+    label: "{{ cable.termination_a.device }} to {{ cable.termination_b.device }}"
+  tags:
+    - netbox_cable

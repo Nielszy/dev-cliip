@@ -1,0 +1,58 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: create-gnmic-target-file
+  namespace: network-monitoring
+spec:
+  schedule: "0 14 * * *"
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: create-gnmic-target-file
+          labels:
+            app.kubernetes.io/name: create-gnmic-target-file
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: scripts
+              configMap:
+                name: create-gnmic-target-file
+                items:
+                  - key: create_gnmic_target_file.py
+                    path: create_gnmic_target_file.py
+                  - key: gnmic-targets-configMap.yaml.j2
+                    path: gnmic-targets-configMap.yaml.j2
+          containers:
+            - name: create-gnmic-target-file
+              image: ghcr.io/nielszy/python:1.0.0
+              imagePullPolicy: IfNotPresent
+              command:
+                - python
+              args:
+                - /opt/create_gnmic_target_file.py
+              envFrom:
+                - secretRef:
+                    name: create-gnmic-target-file-credentials
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /opt
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsUser: 65534
+                runAsGroup: 65534

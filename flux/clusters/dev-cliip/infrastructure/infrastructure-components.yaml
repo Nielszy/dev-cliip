@@ -1,0 +1,72 @@
+# Cilium needs to run before everything else.
+# All other Kustomizations depend on the infrastructure-cilium Kustomization.
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-cilium
+  namespace: flux-system
+spec:
+  interval: 24h
+  retryInterval: 2m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./flux/infrastructure/dev-cliip/components/cilium
+  wait: true
+  prune: true
+# ingress-nginx needs to run before other applications that use ingresses.
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-ingress-ngnix
+  namespace: flux-system
+spec:
+  interval: 24h
+  retryInterval: 2m
+  timeout: 5m
+  dependsOn:
+    - name: infrastructure-cilium
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./flux/infrastructure/dev-cliip/components/ingress-nginx
+  wait: true
+  prune: true
+# After Cilium and ingress-nginx are running and ready, the other infra related applications should be installed.
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-monitoring
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: infrastructure-ingress-ngnix
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./flux/infrastructure/dev-cliip/components/monitoring
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-sealed-secrets
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: infrastructure-ingress-ngnix
+  interval: 5m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./flux/infrastructure/dev-cliip/components/sealed-secrets
+  prune: true
