@@ -31,7 +31,7 @@ Why run dev-cliip on a Lima VM and not use Colima or alternatives to run all dev
 
 ## Warning
 
-**Never commit cleartext API tokens or passwords for cloud services, APIs, or production systems. The credentials in dev-cliip are local-only and cannot access anything outside your Mac.**
+**Never commit cleartext API tokens or passwords for cloud services, APIs, or production systems to GitHub. The credentials provided in the dev-cliip repo are local-only and cannot access anything outside your Mac.**
 
 The dev-cliip environment is designed as a playground for development and experimentation. Parts of dev-cliip should **never** be used in production environments without making the necessary adjustments. You must perform thorough due diligence and testing before deploying any component in a production environment.
 
@@ -45,7 +45,7 @@ Specifically, never reuse any component of this project in a real-world environm
 
 ## How to start?
 
-Start by forking this project into a **private** repository called `dev-cliip`. Keep it private since you'll be committing an encrypted API token to your repo. We will use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt credentials that will be committed to your forked repo.
+Start by forking this project into a **private** repository called `dev-cliip`. Keep it private since you'll be committing an **encrypted** API token to your repo. We will use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt credentials that will be committed to your forked repo.
 
 After that, create a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) called `dev-cliip` with the following permissions and grant the PAT access to your `dev-cliip` repository:
 
@@ -53,6 +53,8 @@ After that, create a [personal access token](https://docs.github.com/en/authenti
 - Read access to metadata.
 
 This is necessary because FluxCD will use the PAT in a later stage to upload and download files to the `flux` folder in your dev-cliip repository. The PAT will also be used as a part of an automation workflow where files will be commited to your repo.
+
+Clone your forked repository to your Mac and check out the latest tag.
 
 Disable any VPN clients before deploying and using dev-cliip, as VPNs can interfere with local routing on your Mac and cause connectivity issues.
 
@@ -394,7 +396,7 @@ In the following steps we will make sure that:
 
 Let's go:
 
-1. Start by adding your PAT and GitHub username (both in base64 format) to the `GITHUB_PAT` key and `GITHUB_REPO_OWNER` respectively in the`create-gnmic-target-file-credentials-sealedSecret.yaml` file in the `jobs` folder.
+1. Start by adding your PAT and GitHub username (both in base64 format) to the `GITHUB_PAT` key and `GITHUB_REPO_OWNER` respectively in the `create-gnmic-target-file-credentials-sealedSecret.yaml` file in the `jobs` folder.
 2. Then uncomment the three commented lines in the `flux/applications/base/network-monitoring/kustomization.yaml` file.
 3. Transform the `create-gnmic-target-file-credentials-sealedSecret.yaml` Secret into a SealedSecret so you can safely upload this data to your private dev-cliip GitHub repo:
 
@@ -404,7 +406,7 @@ Let's go:
     cat flux/applications/base/network-monitoring/gnmic/jobs/create-gnmic-target-file-credentials-sealedSecret.yaml | kubeseal --controller-namespace sealed-secrets --controller-name sealed-secrets -o yaml | pbcopy
     ```
 
-    The `pbcopy` command caused the output to be on your clipboard. Now remove all lines in the file you just kubesealed and paste the contents from the clipboard in the same file. You end up with the file looking something like this:
+    The `pbcopy` command caused the output to be on your clipboard. Now remove all lines in the file (`create-gnmic-target-file-credentials-sealedSecret.yaml`) you just kubesealed and paste the contents from the clipboard in that file. You end up with the file looking something like this:
 
     ```yaml
     ---
@@ -426,6 +428,8 @@ Let's go:
           namespace: network-monitoring
         type: Opaque
     ```
+
+    **Note:** this SealedSecret can only be unsealed by the Sealed Secrets controller with the private key it was sealed with. You will have to kubeseal the original K8s Secret again when you delete the dev-cliip VM and deploy dev-cliip from the start.
 
 4. Commit the changes to the `main` branch of your dev-cliip repo.
 
