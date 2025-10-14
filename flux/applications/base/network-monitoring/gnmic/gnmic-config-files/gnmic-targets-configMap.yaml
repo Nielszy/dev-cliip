@@ -6,5 +6,5 @@ metadata:
   namespace: network-monitoring
 data:
   targets.gnmic.yaml: |
-    ---
-    # Now it's still empty.
+    DC0001-PRD-SPINE-SW1001:
+      address: 172.16.103.11:6030
