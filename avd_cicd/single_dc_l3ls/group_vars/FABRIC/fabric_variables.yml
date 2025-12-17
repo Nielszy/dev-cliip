@@ -66,8 +66,8 @@ cv_settings:
   cvaas:
     enabled: true
     clusters:
-      - name: joris-lab
-        region: us-central1-c
+      - name: ""
+        region: ""
         token_file: /mnt/flash/token
   terminattr:
     disable_aaa: true
