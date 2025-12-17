@@ -1,0 +1,11 @@
+---
+# Offline mode disables installation of requirements.yml and schema refreshing.
+offline: true
+skip_list:
+  - yaml[line-length]
+  - yaml[comments-indentation]
+  - yaml[indentation]
+  - ignore-errors
+exclude_paths:
+  - single_dc_l3ls/eos_designs_to_containerlab/
+  - single_dc_l3ls/intended/containerlab/clab_single-dc-l3ls.yml

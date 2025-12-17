@@ -1,0 +1,4 @@
+.ansible
+.devcontainer/*
+containerlab/labs/clab-dev-cliip-cb-lab01/
+containerlab/labs/dev-cliip-cb-lab01.clab.yaml

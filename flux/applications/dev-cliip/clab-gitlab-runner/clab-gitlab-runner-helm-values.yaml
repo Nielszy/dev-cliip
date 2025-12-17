@@ -1,0 +1,28 @@
+---
+gitlabUrl: https://gitlab.com
+rbac:
+  create: true
+serviceAccount:
+  create: true
+runners:
+  secret: clab-gitlab-runner-authentication-token
+  config: |
+    [[runners]]
+      environment = ["FF_USE_ADVANCED_POD_SPEC_CONFIGURATION=true", "CUSTOM_VAR=value"]
+      [runners.kubernetes]
+        namespace = "{{ .Release.Namespace }}"
+        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v${CI_RUNNER_VERSION}"
+        helper_cpu_request = "100m"
+        helper_memory_request = "128Mi"
+        helper_memory_limit = "128Mi"
+        privileged = true
+        cap_add = ["NET_ADMIN", "SYS_ADMIN", "SYS_PTRACE"]
+        service_account = "clab-gitlab-runner-gitlab-runner"
+      [runners.kubernetes.pod_security_context]
+        run_as_non_root = false
+      [[runners.kubernetes.pod_spec]]
+          name = "shareProcessNamespace"
+          patch = '''
+            shareProcessNamespace: true
+          '''
+          patch_type = "strategic"

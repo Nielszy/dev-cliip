@@ -1,0 +1,6 @@
+---
+# dc1-leaf2c.yml
+ansible_host: 172.16.103.152
+serial_number: ""
+custom_structured_configuration_metadata:
+  system_mac_address: a4:a7:72:b8:a2:2a

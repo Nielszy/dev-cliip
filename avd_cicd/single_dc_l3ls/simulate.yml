@@ -1,0 +1,18 @@
+---
+- name: Create AVD node specific files.
+  hosts: FABRIC
+  gather_facts: false
+  tasks:
+    - name: Create AVD node specific files.
+      ansible.builtin.import_role:
+        name: eos_designs_to_containerlab
+        tasks_from: create_avd_node_files
+
+# - name: Deploy containerlab topology.
+#   hosts: SIMULATION
+#   gather_facts: false
+#   tasks:
+#     - name: Create and deploy containerlab topology
+#       import_role:
+#         name: eos_designs_to_containerlab
+#         tasks_from: deploy

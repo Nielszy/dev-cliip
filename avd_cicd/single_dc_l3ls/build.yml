@@ -1,0 +1,11 @@
+---
+- name: Generate configs and documentation.
+  hosts: FABRIC
+  gather_facts: false
+  tasks:
+    - name: Generate AVD structured configurations and fabric documentation.
+      ansible.builtin.import_role:
+        name: arista.avd.eos_designs
+    - name: Generate device configurations and documentation.
+      ansible.builtin.import_role:
+        name: arista.avd.eos_cli_config_gen

@@ -1,0 +1,64 @@
+---
+all:
+  hosts:
+    cloudvision:
+      ansible_host: ""
+      ansible_password: ""
+  children:
+    FABRIC:
+      children:
+        DC1:
+          children:
+            DC1_SPINES:
+              hosts:
+                dc1-spine1:
+                  ansible_host: 172.16.103.11
+                dc1-spine2:
+                  ansible_host: 172.16.103.12
+            DC1_L3_LEAVES:
+              hosts:
+                dc1-leaf1a:
+                  ansible_host: 172.16.103.101
+                dc1-leaf1b:
+                  ansible_host: 172.16.103.102
+                dc1-leaf2a:
+                  ansible_host: 172.16.103.103
+                dc1-leaf2b:
+                  ansible_host: 172.16.103.104
+            DC1_L2_LEAVES:
+              hosts:
+                dc1-leaf1c:
+                  ansible_host: 172.16.103.151
+                dc1-leaf2c:
+                  ansible_host: 172.16.103.152
+    NETWORK_SERVICES:
+      children:
+        DC1_L3_LEAVES:
+        DC1_L2_LEAVES:
+    CONNECTED_ENDPOINTS:
+      children:
+        DC1_L3_LEAVES:
+        DC1_L2_LEAVES:
+    SIMULATION:
+      hosts:
+        clab:
+          ansible_host: 127.0.0.1
+          ansible_port: 2222
+      vars:
+          ansible_user: avd
+          ansible_password: avd
+          ansible_become_password: avd
+          ansible_connection: ssh
+          ansible_become: true
+          ansible_become_method: sudo
+          sim_env: clab
+          sim_ceos_version: registry.kube-system.svc.cluster.local:80/ceos-arm-lab:4.34.3M
+          sim_topology_file_name: single-dc-l3ls
+          containerlab_labname: single-dc-l3ls
+          containerlab_mgmt_network: 172.16.103.0/24
+          containerlab_custom_interface_mapping: true
+          containerlab_custom_interface_mapping_same_number: true
+          containerlab_serial_sysmac: true
+          containerlab_prefix: ""
+          containerlab_deploy_on_hosts: false
+          containerlab_onboard_to_cvp_token: ""
