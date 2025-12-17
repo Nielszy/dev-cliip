@@ -1,1 +1,5 @@
 containerlab/labs/dev-cliip-lab01/clab-dev-cliip-lab01/
+avd_cicd/.ansible
+avd_cicd/.devcontainer/*
+avd_cicd/containerlab/labs/clab-dev-cliip-cb-lab01/
+avd_cicd/containerlab/labs/dev-cliip-cb-lab01.clab.yaml

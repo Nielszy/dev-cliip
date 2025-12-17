@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+  - name: clab-gitlab-runner-helm-values
+    namespace: clab-gitlab-runner
+    files:
+      - values.yaml=clab-gitlab-runner-helm-values.yaml
+resources:
+  - ../../base/gitlab-runner
+  - clab-gitlab-runner-namespace.yaml
+  - clab-gitlab-runner-helmRelease.yaml
+  - clab-gitlab-runner-authentication-token-sealedSecret.yaml
+configurations:
+  - kustomize-nameReference.yaml

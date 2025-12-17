@@ -1,0 +1,17 @@
+---
+- name: Validate fabric with ANTA.
+  hosts: FABRIC
+  gather_facts: false
+  connection: localhost
+  tasks:
+    - name: Validate fabric with ANTA.
+      ansible.builtin.import_role:
+        name: arista.avd.anta_runner
+      vars:
+        avd_catalogs_filters:
+          - skip_tests:
+              - VerifyLoggingErrors
+              - VerifyNTP
+              - VerifyInterfaceDiscards
+              - VerifyMemoryUtilization
+      ignore_errors: true

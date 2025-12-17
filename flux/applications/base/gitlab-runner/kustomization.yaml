@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+  - name: base-gitlab-runner-helm-values
+    namespace: gitlab-runner
+    files:
+      - values.yaml=base-gitlab-runner-helm-values.yaml
+resources:
+  - gitlab-runner-namespace.yaml
+  - gitlab-runner-helmRepository.yaml

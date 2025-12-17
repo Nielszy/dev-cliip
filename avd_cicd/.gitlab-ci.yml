@@ -1,0 +1,157 @@
+---
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - lint
+  - build
+  - digital-twin
+  - update
+  - deploy
+  - validate
+
+default:
+  image: ghcr.io/nielszy/netdevops-ee:1.0.7
+
+variables:
+  ANSIBLE_CONFIG: "${CI_PROJECT_DIR}/single_dc_l3ls/ansible.cfg"
+  ANSIBLE_FORCE_COLOR: "true"
+
+.common_rules: &common_rules
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+.manual_rules: &manual_rules
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: false
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: false
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: false
+
+.main_branch_rules: &main_branch_rules
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+
+.avd_tags: &avd_tags
+  tags:
+    - avd
+
+Linting YAML files:
+  stage: lint
+  <<:
+    - *avd_tags
+    - *common_rules
+  script:
+    - yamllint .
+
+Linting Ansible related files:
+  stage: lint
+  <<:
+    - *avd_tags
+    - *common_rules
+  script:
+    - |
+      if [ -f ./.ansible-lint-ignore ]; then
+        export IGNORE_FLAG="-i ./.ansible-lint-ignore"
+      fi
+    - ansible-lint --force-color ${IGNORE_FLAG}
+
+Run the AVD build step and commit changes to the branch:
+  stage: build
+  <<:
+    - *avd_tags
+    - *manual_rules
+  script:
+    - cd single_dc_l3ls
+    - ansible-playbook build.yml
+    - git config user.name "AVD CI Build Job"
+    - git config user.email "avd-ci@dev-cliip.test"
+    - git add ./intended/ ./documentation/
+    - |
+      if ! git diff --staged --quiet; then
+        git commit -m "Chore: regenerate AVD intended configuration files [skip ci]"
+        git push https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git HEAD:${CI_COMMIT_REF_NAME}
+      else
+        echo "No configuration changes detected."
+      fi
+
+Deploy Digital Twin environment and validate the AVD fabric with ANTA:
+  stage: digital-twin
+  <<:
+    - *avd_tags
+    - *manual_rules
+  services:
+    - name: docker:28-dind
+      alias: docker
+      command: ["--tls=false", "--insecure-registry=registry.kube-system.svc.cluster.local:80"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DRIVER: overlay2
+    FF_NETWORK_PER_BUILD: "true"
+  script:
+    - cd single_dc_l3ls && git clone https://github.com/arista-netdevops-community/eos_designs_to_containerlab.git
+    - ansible-playbook simulate.yml
+    - containerlab version
+    - tar -xvf ./intended/containerlab/clab_tmp_containerlab_archive.tar.gz -C ./intended/containerlab/
+    - containerlab deploy --topo ./intended/containerlab/clab_single-dc-l3ls.yml
+    - sleep 30
+    - ansible-playbook deploy_eapi.yml
+    - sleep 30
+    - ansible-playbook validate.yml
+    - git config user.name "AVD CI deploy and validate job"
+    - git config user.email "avd-ci@dev-cliip.test"
+    - git add ./anta/
+    - |
+      if ! git diff --staged --quiet; then
+        git commit -m "Chore: commit ANTA test results [skip ci]"
+        git push https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git HEAD:${CI_COMMIT_REF_NAME}
+      else
+        echo "No changes detected in the ANTA output folder."
+      fi
+    - containerlab destroy -c -a -y
+
+Update NetBox:
+  stage: update
+  <<:
+    - *avd_tags
+    - *main_branch_rules
+  script:
+    - echo "NetBox was updated successfully!"
+
+Push config to Arista CloudVision:
+  stage: deploy
+  <<:
+    - *avd_tags
+    - *main_branch_rules
+  script:
+    - cd single_dc_l3ls
+    - ansible-playbook deploy_cv.yml
+
+Push config to the Arista production environment directly via eAPI:
+  stage: deploy
+  <<:
+    - *avd_tags
+    - *main_branch_rules
+  script:
+    - echo "Changes deployed to the production environment successfully!"
+
+Run ANTA tests on the Arista production environment:
+  stage: validate
+  <<:
+    - *avd_tags
+    - *main_branch_rules
+  script:
+    - echo "All ANTA tests passed!"
