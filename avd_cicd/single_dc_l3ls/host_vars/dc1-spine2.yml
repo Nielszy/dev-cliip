@@ -3,4 +3,4 @@
 ansible_host: 172.16.103.12
 serial_number: ""
 custom_structured_configuration_metadata:
-  system_mac_address: a4:a7:72:44:c5:fe
+  system_mac_address: a4:a7:72:44:d5:fe
