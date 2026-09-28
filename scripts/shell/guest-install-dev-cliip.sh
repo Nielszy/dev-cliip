@@ -6,7 +6,6 @@ set -e
 DOCKER_VERSION="5:28.5.0-1~debian.13~trixie"
 MINIKUBE_VERSION="v1.37.0"
 CONTAINERLAB_VERSION="0.70.2"
-GH_VERSION="2.81.0"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -114,27 +113,6 @@ else
     bash -c "$(curl -sL https://get.containerlab.dev)" -- -v ${CONTAINERLAB_VERSION}
 
     echo -e "${GREEN}✓${NC} Containerlab installed successfully"
-fi
-echo ""
-
-# GitHub CLI (gh)
-echo "Checking GitHub CLI..."
-if command_exists gh; then
-    VERSION=$(gh --version | head -n 1)
-    echo -e "${GREEN}✓${NC} GitHub CLI already installed: ${BLUE}$VERSION${NC}"
-else
-    echo -e "${YELLOW}→${NC} Installing GitHub CLI ${GH_VERSION}..."
-
-    # Add GitHub CLI repository
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-
-    # Install specific gh version
-    sudo apt-get update
-    sudo apt-get install -y gh=${GH_VERSION}
-
-    echo -e "${GREEN}✓${NC} GitHub CLI installed successfully"
 fi
 echo ""
 
