@@ -75,7 +75,7 @@ else
     brew install helm
     echo -e "${GREEN}✓${NC} Helm installed successfully"
 fi
-echo "adding cilium repo"
+echo "Adding Cilium Helm repo"
 helm repo add cilium https://helm.cilium.io/
 helm repo update
 echo ""
