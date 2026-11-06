@@ -12,3 +12,17 @@ resources:
   # - gnmic/jobs/create-gnmic-target-file-configMap.yaml
   # - gnmic/jobs/create-gnmic-target-file-credentials-sealedSecret.yaml
   # - gnmic/jobs/create-gnmic-target-file-cronJob.yaml
+configMapGenerator:
+  # Grafana dashboards. The kube-prometheus-stack Grafana sidecar loads every
+  # ConfigMap labelled grafana_dashboard: "1", in any namespace.
+  - name: grafana-dashboard-gnmic-network-monitoring
+    namespace: network-monitoring
+    files:
+      - grafana-dashboards/gnmic_network_monitoring.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: "1"
+      annotations:
+        # Grafana folder, see grafana.sidecar.dashboards.folderAnnotation.
+        grafana_folder: gNMIc
