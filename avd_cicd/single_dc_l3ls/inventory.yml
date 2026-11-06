@@ -52,7 +52,7 @@ all:
           ansible_become: true
           ansible_become_method: sudo
           sim_env: clab
-          sim_ceos_version: registry.kube-system.svc.cluster.local:80/ceos-arm-lab:4.34.3M
+          sim_ceos_version: registry.kube-system.svc.cluster.local:80/ceos-arm-lab:4.36.3.2M
           sim_topology_file_name: single-dc-l3ls
           containerlab_labname: single-dc-l3ls
           containerlab_mgmt_network: 172.16.103.0/24
