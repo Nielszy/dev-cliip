@@ -1,0 +1,4 @@
+---
+# Use the chart's default values.
+# This includes the NetBox image that ships with the chart (no custom image),
+# and the bundled PostgreSQL and Valkey subcharts.

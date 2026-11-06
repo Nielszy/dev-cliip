@@ -78,7 +78,7 @@ data:
                     verify=False,
                     headers={
                         "Accept": "application/json",
-                        "Authorization": f"Token {self.NETBOX_API_TOKEN}",
+                        "Authorization": f"Bearer {self.NETBOX_API_TOKEN}",
                     },
                 )
                 response.raise_for_status()
@@ -90,11 +90,19 @@ data:
                         print(f"{item['name']} is missing primary IPv4 address in NetBox.")
                         continue
 
+                    # Newer NetBox versions return multi-select custom field
+                    # choices as {"value": ..., "label": ...} objects instead
+                    # of plain strings, so normalize them to their values.
+                    monitored_with = [
+                        choice["value"] if isinstance(choice, dict) else choice
+                        for choice in item["custom_fields"].get("monitored_with") or []
+                    ]
+
                     # Transform and clean device data
                     device = {
                         "name": item["name"],
                         "primary_ipv4": item["primary_ip4"]["address"].split("/")[0], # Remove subnet mask
-                        "monitored_with": item["custom_fields"]["monitored_with"],
+                        "monitored_with": monitored_with,
                         "platform": item["platform"],
                     }
                     filtered_devices.append(device)

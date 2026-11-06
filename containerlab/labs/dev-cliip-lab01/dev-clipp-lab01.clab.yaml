@@ -7,7 +7,7 @@ mgmt:
 topology:
   kinds:
     arista_ceos:
-      image: ceos-arm-lab:4.34.3M
+      image: ceos-arm-lab:4.36.3.2M
       env:
         CLAB_MGMT_VRF: MGMT
 

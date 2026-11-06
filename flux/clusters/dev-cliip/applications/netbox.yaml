@@ -5,6 +5,9 @@ metadata:
   name: netbox
   namespace: flux-system
 spec:
+  # The NetBox HTTPRoute needs the Gateway API CRDs and the Gateway.
+  dependsOn:
+    - name: infrastructure-gateway
   interval: 6h
   sourceRef:
     kind: GitRepository

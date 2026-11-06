@@ -20,7 +20,3 @@ prometheus:
 # ref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards
 dashboards:
   enabled: true
-gatewayAPI:
-  # -- Enable support for Gateway API in cilium
-  # This will automatically set enable-envoy-config as well.
-  enabled: true
