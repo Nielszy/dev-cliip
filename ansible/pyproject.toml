@@ -1,0 +1,13 @@
+[project]
+name = "dev-cliip-ansible"
+version = "0.1.0"
+description = "Python dependencies for the dev-cliip Ansible playbooks"
+requires-python = ">=3.13"
+dependencies = [
+    "ansible-core",
+    "pynetbox>=7.6.0",
+    "pytz",
+]
+
+[tool.uv]
+package = false

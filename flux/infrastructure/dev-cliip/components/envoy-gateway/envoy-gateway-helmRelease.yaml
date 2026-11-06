@@ -1,0 +1,24 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: envoy-gateway
+  namespace: envoy-gateway-system
+spec:
+  interval: 6h
+  chart:
+    spec:
+      chart: gateway-helm
+      version: v1.9.3
+      sourceRef:
+        kind: HelmRepository
+        name: envoy-gateway
+        namespace: envoy-gateway-system
+  # The chart also installs the Gateway API CRDs.
+  upgrade:
+    crds: CreateReplace
+  install:
+    crds: CreateReplace
+  valuesFrom:
+  - kind: ConfigMap
+    name: base-envoy-gateway-helm-values

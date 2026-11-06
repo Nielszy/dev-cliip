@@ -1,0 +1,20 @@
+---
+# Expose the Envoy proxy on a fixed NodePort, so the SSH LocalForward on the Mac (8080 -> 192.168.49.2:30010) keeps working.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: dev-cliip
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: NodePort
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+                - port: 80
+                  nodePort: 30010

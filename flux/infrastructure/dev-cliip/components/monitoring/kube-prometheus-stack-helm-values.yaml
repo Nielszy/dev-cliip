@@ -1,10 +1,13 @@
 ---
 prometheus:
-  ingress:
-    enabled: true
-    hosts:
-      - prometheus.dev-cliip.test
-    ingressClassName: nginx
+  route:
+    main:
+      enabled: true
+      hostnames:
+        - prometheus.dev-cliip.test
+      parentRefs:
+        - name: dev-cliip
+          namespace: envoy-gateway-system
   prometheusSpec:
     retention: 1d
     ruleSelectorNilUsesHelmValues: false
@@ -24,16 +27,26 @@ prometheus:
     externalLabels:
       cluster: dev-cliip
 grafana:
-  ingress:
-    enabled: true
-    hosts:
-      - grafana.dev-cliip.test
-    ingressClassName: nginx
+  # Newer chart versions (e.g. v92.18.0) no longer default the admin password
+  # to "prom-operator" (v77.13.0 did) and generate a random one instead. Pin
+  # the password documented in the README for this local lab.
+  adminPassword: prom-operator
+  route:
+    main:
+      enabled: true
+      hostnames:
+        - grafana.dev-cliip.test
+      parentRefs:
+        - name: dev-cliip
+          namespace: envoy-gateway-system
   defaultDashboardsTimezone: browser
 alertmanager:
-  ingress:
-    enabled: true
-    hosts:
-      - alertmanager.dev-cliip.test
-    ingressClassName: nginx
+  route:
+    main:
+      enabled: true
+      hostnames:
+        - alertmanager.dev-cliip.test
+      parentRefs:
+        - name: dev-cliip
+          namespace: envoy-gateway-system
 cleanPrometheusOperatorObjectNames: true

@@ -1,0 +1,53 @@
+---
+allowedHosts:
+  - netbox.dev-cliip.test
+  - netbox.netbox.svc.cluster.local
+  - localhost
+
+# Fixed superuser credentials and API token, used by the Ansible provisioning
+# playbooks and the gNMIc target file job.
+superuser:
+  existingSecret: netbox-superuser
+
+# NetBox >= 4.5 creates a v2 API token (nbt_<key>.<token>) for the superuser
+# only when both the token and the key are provided. The chart only mounts the
+# token, so mount the key from the same secret as well.
+extraVolumes:
+  - name: superuser-api-key
+    secret:
+      secretName: netbox-superuser
+      items:
+        - key: api_key
+          path: superuser_api_key
+extraVolumeMounts:
+  - name: superuser-api-key
+    mountPath: /run/secrets/superuser_api_key
+    subPath: superuser_api_key
+    readOnly: true
+
+timeZone: Europe/Amsterdam
+changelogRetention: 365
+paginateCount: 100
+enforceGlobalUnique: true
+
+cors:
+  originAllowAll: true
+
+metrics:
+  enabled: true
+
+scriptsPersistence:
+  enabled: true
+
+# Single-node lab: NetBox only uses the Valkey primary, so skip the replicas.
+valkey:
+  replica:
+    replicaCount: 0
+
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: dev-cliip
+      namespace: envoy-gateway-system
+  hostnames:
+    - netbox.dev-cliip.test

@@ -2,6 +2,8 @@
 plugin: netbox.netbox.nb_inventory
 api_endpoint: "http://netbox.dev-cliip.test:8080"
 token:
+  type: Bearer
+  value: "nbt_mAPNNrrqY3fL.TyFj3UBM4NvsvUjdD7nCo5sRTufHaifciHUL5hzd"
 interfaces: false
 use_extra_vars: true
 site_data: false

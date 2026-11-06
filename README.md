@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project aims to provide a local development platform that replicates the key tools commonly used in modern production environments for network and infrastructure automation, monitoring, and observability. Once the platform is up and running, all tools are readily available on static endpoints—giving you a consistent and accessible environment to develop and test your automation and observability workflows.
+This project aims to provide a local development platform that replicates the key tools commonly used in modern production environments for network and infrastructure automation, monitoring, and observability. Once the platform is up and running, all tools are readily available on static endpoints, giving you a consistent and accessible environment to develop and test your automation and observability workflows.
 
 This guide provides step-by-step instructions for creating a local development `dev` cloud infrastructure intelligence platform `cliip` on a Linux VM (guest) running on you Mac (host).
 
@@ -24,8 +24,6 @@ Why run dev-cliip on a Lima VM and not use Colima or alternatives to run all dev
 
 ## To-Do
 
-- Move NetBox from my own deployment mechanism to the official NetBox Helm chart.
-- Move away from ingress-nginx and implement the Cilium Gateway API for routing traffic into the K8s cluster.
 - Add support for multi-node Kubernetes clusters using [kind](`https://kind.sigs.k8s.io/`) as an alternative to single-node minikube clusters.
 - Deploy and manage FluxCD with the [Flux Operator](https://github.com/controlplaneio-fluxcd/flux-operator) instead of the `flux bootstrap` command.
 
@@ -119,10 +117,12 @@ Unless otherwise specified, all commands in this guide should be executed from t
 
     Now that all the necessary software is installed on your Mac, let's create the dev-cliip Debian 13 VM! In the `lima` folder, you'll find the `dev-cliip-debian-13.yaml` Lima config file. Adjust the following components in the config file before continuing:
 
-    - The amount of RAM and CPU, based on your MacBook hardware configuration (my Mac has the M2 Pro SoC and 32GB of memory).
-    - The mount paths according to where you cloned your fork of the dev-cliip project and where you stored the Arista cEOS ARM image.
+    - The amount of RAM and CPU, based on your MacBook hardware configuration (my Mac has the M5 Pro SoC and 24GB of memory).
+    - The mount `location` paths according to where you cloned your fork of the dev-cliip project and where you stored the Arista cEOS ARM image. Leave the `mountPoint` paths as they are: Lima mounts both folders in your home directory in the VM (`~/dev-cliip` and `~/container-images`).
 
-    **Note:** The current paths in the config file are examples, where `USER` corresponds to the output of `echo $USER` on your Mac.
+    **Note:** The current `location` paths in the config file are examples, where `USER` corresponds to the output of `echo $USER` on your Mac.
+
+    **Note:** The VM gets its IP address (192.168.104.x) from Lima via DHCP, so it can differ per VM. That is fine, because nothing depends on it: SSH connects through a port forward on localhost, and the `192.168.49.2` address used below belongs to the minikube node inside the VM, which gets a static IP address when you start minikube.
 
     Create the `dev-cliip-debian-13` VM instance:
 
@@ -130,7 +130,7 @@ Unless otherwise specified, all commands in this guide should be executed from t
     limactl start lima/dev-cliip-debian-13.yaml
     ```
 
-    After the VM is created, add the following lines to the `~/.ssh/config` file on your Mac:
+    After the VM is created, add the following lines to the `~/.ssh/config` file on your Mac (or include them in a sepetae file):
 
     ```sh
     Host lima-dev-cliip-debian-13
@@ -205,7 +205,7 @@ Unless otherwise specified, all commands in this guide should be executed from t
     On your Mac perform the following command from the root of the dev-cliip repo:
 
     ```sh
-    helm install cilium cilium/cilium -f flux/infrastructure/dev-cliip/components/cilium/cilium-helm-values.yaml --version 1.18.2 --namespace kube-system
+    helm install cilium cilium/cilium -f flux/infrastructure/dev-cliip/components/cilium/cilium-helm-values.yaml --version 1.20.4 --namespace kube-system
     ```
 
     Check the status of Cilium after a minute two:
@@ -248,6 +248,8 @@ Unless otherwise specified, all commands in this guide should be executed from t
     kubectl get pods -A
     ```
 
+    > **Optional: GitLab Runner.** The containerlab GitLab Runner is not installed by default. To enable it, first re-seal `flux/applications/dev-cliip/clab-gitlab-runner/clab-gitlab-runner-authentication-token-sealedSecret.yaml` with your own runner token for your cluster. Then move `flux/clusters/dev-cliip-optional/applications/clab-gitlab-runner.yaml` into `flux/clusters/dev-cliip/applications/`, then commit and push.
+
 6. Add FQDNs to the `/etc/hosts` file:
 
     Add the FQDNs to your `/etc/hosts` file on your Mac:
@@ -281,7 +283,7 @@ Unless otherwise specified, all commands in this guide should be executed from t
 
     ```sh
     cd ~/container-images/
-    docker import cEOSarm-lab-4.34.3M.tar.tar ceos-arm-lab:4.34.3M
+    docker import cEOSarm-lab-4.36.3.2M.tar.tar ceos-arm-lab:4.36.3.2M
     ```
 
     Creating the image can take a while. Upon completion, you should see the new image in the list when you run this command:
@@ -330,11 +332,19 @@ In the next sections we will provision NetBox with data using Ansible. We will a
 2. Run provisioning playbooks:
 
     All commands in this step are executed on your Mac (not on the VM).
-    First install the Python requirements in the `requirements.txt` file on your Mac (use your preferred way).
-    Then install the NetBox Ansible collection:
+    First create a Python virtual environment with the latest version of ansible-core and the other Python requirements. The `ansible/pyproject.toml` file lists these, and [uv](https://docs.astral.sh/uv/) installs them (Python 3.13 or newer is required and uv downloads it if needed):
 
     ```sh
     cd ansible
+    uv sync --upgrade
+    source .venv/bin/activate
+    ```
+
+    > If you prefer not to use uv, install `ansible-core` and the packages in `requirements.txt` in your preferred way.
+
+    Then install the NetBox Ansible collection:
+
+    ```sh
     ansible-galaxy install -r collections/requirements.yaml
     ```
 
@@ -525,7 +535,7 @@ limactl delete dev-cliip-debian-13
 Now that you can deploy dev-cliip from scratch, try the following:
 
 - Adding more automation workflows.
-- Add new applications to the dev-cliip cluster with the help of FluxCD (for example [cert-manager](https://cert-manager.io/) and enable TLS on the ingresses).
+- Add new applications to the dev-cliip cluster with the help of FluxCD (for example [cert-manager](https://cert-manager.io/) and enable TLS on the Gateway).
 - Experiment with the gNMI protocol and all settings gNMIc offers (maybe add extra paths to subscribe to on the Arista switches).
 - Create fancy [Grafana](http://grafana.dev-cliip.test:8080/) dashboards.
 - Create a new Containerlab topology (with multiple vendors) and monitor those devices with gNMI to.

@@ -1,2 +1,2 @@
 pytz
-pynetbox
+pynetbox>=7.6.0
