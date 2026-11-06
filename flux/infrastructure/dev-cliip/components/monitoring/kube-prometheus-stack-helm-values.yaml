@@ -43,6 +43,13 @@ grafana:
         - name: dev-cliip
           namespace: envoy-gateway-system
   defaultDashboardsTimezone: browser
+  sidecar:
+    dashboards:
+      # Put a dashboard in the Grafana folder named in the grafana_folder
+      # annotation of its ConfigMap. Dashboards without it stay in General.
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
 alertmanager:
   route:
     main:

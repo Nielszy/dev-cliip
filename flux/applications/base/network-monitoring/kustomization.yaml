@@ -23,3 +23,6 @@ configMapGenerator:
       disableNameSuffixHash: true
       labels:
         grafana_dashboard: "1"
+      annotations:
+        # Grafana folder, see grafana.sidecar.dashboards.folderAnnotation.
+        grafana_folder: gNMIc
