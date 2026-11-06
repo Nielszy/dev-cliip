@@ -9,6 +9,9 @@ prometheus:
         - name: dev-cliip
           namespace: envoy-gateway-system
   prometheusSpec:
+    # Enable the TSDB admin API so series can be deleted without replacing
+    # the Prometheus volume. Only acceptable in this local lab.
+    enableAdminAPI: true
     retention: 1d
     ruleSelectorNilUsesHelmValues: false
     serviceMonitorSelectorNilUsesHelmValues: false
