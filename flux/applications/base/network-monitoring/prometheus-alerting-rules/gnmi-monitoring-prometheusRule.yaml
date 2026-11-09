@@ -1,0 +1,53 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gnmi-monitoring
+  namespace: network-monitoring
+spec:
+  groups:
+    - name: gNMI Monitoring
+      # Evaluate every 5s (the gNMIc scrape interval) instead of the global 30s,
+      # so "for: 15s" means three scrapes.
+      interval: 5s
+      rules:
+        # session-state is mapped to a number by the gNMIc
+        # bgp_session_state_to_number processor:
+        # IDLE=1, CONNECT=2, ACTIVE=3, OPENSENT=4, OPENCONFIRM=5, ESTABLISHED=6.
+        - alert: BGPSessionNotEstablished
+          annotations:
+            summary: "BGP session not established."
+            description: >-
+              BGP session from {{ $labels.source }} to neighbor
+              {{ $labels.neighbor_neighbor_address }} (network instance
+              {{ $labels.network_instance_name }}) is not established
+              (state {{ $value }}).
+          expr: gnmic_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_state_session_state != 6
+          for: 15s
+          labels:
+            severity: warning
+        # oper-status and admin-status are mapped to numbers by the gNMIc
+        # interface_*_status_to_number processors (OpenConfig enum order):
+        # oper-status: UP=1, DOWN=2, TESTING=3, UNKNOWN=4, DORMANT=5,
+        # NOT_PRESENT=6, LOWER_LAYER_DOWN=7. admin-status: UP=1, DOWN=2, TESTING=3.
+        # Only admin-up interfaces alert, so interfaces that are shut down on
+        # purpose stay quiet.
+        # Known behaviour: after a gNMIc restart, an interface with a
+        # description can briefly also be exported without the interface_description
+        # label. This can give a duplicate alert without a description for 1-2
+        # minutes, until that series expires.
+        - alert: EthernetInterfaceDown
+          annotations:
+            summary: "Ethernet interface down."
+            description: >-
+              Interface {{ $labels.interface_name }}
+              ({{ $labels.interface_description }}) on {{ $labels.source }}
+              is administratively up but operationally not up
+              (oper-status {{ $value }}).
+          expr: >-
+            gnmic_interfaces_interface_state_oper_status{interface_name=~"Ethernet.*"} != 1
+            and on (source, interface_name)
+            gnmic_interfaces_interface_state_admin_status == 1
+          for: 15s
+          labels:
+            severity: warning

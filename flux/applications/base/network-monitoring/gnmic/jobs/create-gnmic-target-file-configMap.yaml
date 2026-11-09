@@ -5,23 +5,15 @@ metadata:
   name: create-gnmic-target-file
   namespace: network-monitoring
 data:
-  gnmic-targets-configMap.yaml.j2: |
+  targets.gnmic.yaml.j2: |
     ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: gnmic-targets
-      namespace: network-monitoring
-    data:
-      targets.gnmic.yaml: |
-        ---
     {% for device in devices %}
     {%     if device.platform.name == "Arista EOS" and 'gnmic' in device.monitored_with %}
-        {{ device.name }}:
-          address: {{ device.primary_ipv4 }}:6030
+    {{ device.name }}:
+      address: {{ device.primary_ipv4 }}:6030
     {%     elif 'gnmic' in device.monitored_with %}
-        {{ device.name }}:
-          address: {{ device.primary_ipv4 }}:9339
+    {{ device.name }}:
+      address: {{ device.primary_ipv4 }}:9339
     {%     endif %}
     {% endfor %}
 
@@ -45,12 +37,13 @@ data:
         def __init__(self):
             # Configuration constants
             self.GITHUB_URL = "https://api.github.com"
-            self.TARGET_FILE_TEMPLATE_PATH = "/opt/gnmic-targets-configMap.yaml.j2"
+            self.TARGET_FILE_TEMPLATE_PATH = "/opt/targets.gnmic.yaml.j2"
 
             # API paths
             self.NETBOX_DEVICE_PATH = "/api/dcim/devices/"
-            self.GITHUB_GNMIC_FILE_PATH = "/dev-cliip/flux/applications/base/network-monitoring/gnmic/gnmic-config-files/gnmic-targets-configMap.yaml"
-            self.GITHUB_REPO_FILE_PATH = "flux/applications/base/network-monitoring/gnmic/gnmic-config-files/gnmic-targets-configMap.yaml"
+            # Plain gNMIc targets file; kustomize turns it into the gnmic-targets
+            # ConfigMap (configMapGenerator), so a change restarts gNMIc.
+            self.GITHUB_REPO_FILE_PATH = "flux/applications/base/network-monitoring/gnmic/gnmic-config-files/targets.gnmic.yaml"
 
             # Load environment variables
             self.GITHUB_REPO_NAME = os.getenv("GITHUB_REPO_NAME")

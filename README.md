@@ -382,7 +382,7 @@ Here you see all the K8s manifests that make sure that the `network-monitoring` 
 
 ### gNMIC collector configuration
 
-In the `gnmic-config-files` folder`gnmic-config-sealedSecret.yaml` file you can see the config that is mounted into the gNMIc container during startup.
+In the `gnmic-config-files` folder the `config.gnmic.yaml` file contains the gNMIc config and the `targets.gnmic.yaml` file contains the devices (targets) gNMIc monitors. Kustomize turns them into the `gnmic-config-<hash>` and `gnmic-targets-<hash>` ConfigMaps (see the `configMapGenerator` in `flux/applications/base/network-monitoring/kustomization.yaml`), which are mounted into the gNMIc container. The hash in the names changes whenever the content changes, so Flux then updates the gNMIc StatefulSet and gNMIc restarts with the new config or targets automatically.
 
 Run this command to see the running gNMIc pod and to see the logging that it produces:
 
@@ -391,18 +391,18 @@ kubectl get pods -n network-monitoring
 kubectl logs -n network-monitoring gnmic-0
 ```
 
-As you can see in the logging gNMIc is not doing a lot because the `gnmic-targets-configMap.yaml` file is empty and gNMIc will thus not monitor any devices. We will need to populate that ConfigMap with the devices that are running in our `dev-clipp-lab01` Containerlab topology.
+As you can see in the logging, gNMIc is not doing a lot because the `targets.gnmic.yaml` file is empty and gNMIc will thus not monitor any devices. We will need to populate that file with the devices that are running in our `dev-clipp-lab01` Containerlab topology.
 
 ## Dynamically populate gNMIc targets ConfigMap
 
-In the `flux/applications/base/network-monitoring/gnmic/jobs` folder you will find three manifest. The `create-gnmic-target-file-configMap.yaml` file contains a Jinja2 template and a Python script that will be mounted into a Python container that is described in the `create-gnmic-target-file-cronJob.yaml`. The `create-gnmic-target-file-credentials-sealedSecret.yaml` contains the secrets we need to authenticate to the NetBox and GitHub API and those secrets will also be available as environment variables in the Python container.
+In the `flux/applications/base/network-monitoring/gnmic/jobs` folder you will find three manifest. The `create-gnmic-target-file-configMap.yaml` file contains a Jinja2 template and a Python script that will be mounted into a container that is described in the `create-gnmic-target-file-cronJob.yaml`. The `create-gnmic-target-file-credentials-sealedSecret.yaml` contains the secrets we need to authenticate to the NetBox and GitHub API and those secrets will also be available as environment variables in the Python container.
 
 In the following steps we will make sure that:
 
 - The K8s manifests in the `jobs` folder will contain the necessary information for the K8s CronJob to work.
 - Flux will reconcile the manifest on the dev-cliip cluster.
-- The CronJob will run successfully and fetch the devices from NetBox, render the template and commit the gNMIc targets configmap to the `flux/applications/base/network-monitoring/gnmic/gnmic-config-files/gnmic-targets-configMap.yaml` file on the `main` branch.
-- Flux will reconcile the updated ConfigMap to the dev-cliip cluster and the gNMIc collector will start to monitor both switches that are running in our Containerlab topology.
+- The CronJob will run successfully and fetch the devices from NetBox, render the template and commit the gNMIc targets to the `flux/applications/base/network-monitoring/gnmic/gnmic-config-files/targets.gnmic.yaml` file on the `main` branch.
+- Flux will reconcile the updated targets to the dev-cliip cluster, gNMIc restarts automatically and starts to monitor both switches that are running in our Containerlab topology.
 
 Let's go:
 
@@ -474,13 +474,13 @@ Let's go:
     The logs should resemble something like:
 
     ```text
-    2025-10-08 15:49:26,864 - INFO - Checking if file exists on branch 'main': flux/applications/base/network-monitoring/gnmic/   gnmic-config-files/gnmic-targets-configMap.yaml
+    2025-10-08 15:49:26,864 - INFO - Checking if file exists on branch 'main': flux/applications/base/network-monitoring/gnmic/gnmic-config-files/targets.gnmic.yaml
     2025-10-08 15:49:27,563 - INFO - File exists, SHA: f6b2d3ed47da5ddb844738a9868818ff420cfd5d
-    2025-10-08 15:49:27,563 - INFO - Uploading file to GitHub branch 'main': flux/applications/base/network-monitoring/gnmic/ gnmic-config-files/gnmic-targets-configMap.yaml
-    2025-10-08 15:49:28,247 - INFO - Successfully uploaded file to GitHub: flux/applications/base/network-monitoring/gnmic/ gnmic-config-files/gnmic-targets-configMap.yaml
+    2025-10-08 15:49:27,563 - INFO - Uploading file to GitHub branch 'main': flux/applications/base/network-monitoring/gnmic/gnmic-config-files/targets.gnmic.yaml
+    2025-10-08 15:49:28,247 - INFO - Successfully uploaded file to GitHub: flux/applications/base/network-monitoring/gnmic/gnmic-config-files/targets.gnmic.yaml
     ```
 
-    Now the `gnmic-targets` ConfigMap is dynamically created based on data from NetBox and commited to the dev-cliip repo!
+    Now the `targets.gnmic.yaml` file is dynamically created based on data from NetBox and commited to the dev-cliip repo!
     You can check if this actually happened in GitHub or fetch the updated file locally and check what has actually changed.
 
 8. Trigger a Flux reconciliation of the `network-monitoring` Kustomization again:
@@ -489,21 +489,21 @@ Let's go:
     flux reconcile kustomization network-monitoring --with-source
     ```
 
-    Now the `gnmic-targets` ConfigMap is reconciled in the network-monitoring namespace and ready for the gNMIc collector to use:
+    Now a new `gnmic-targets-<hash>` ConfigMap with the targets is reconciled in the network-monitoring namespace:
 
     ```sh
-    kubectl -n network-monitoring get configmap gnmic-targets -o yaml
+    kubectl -n network-monitoring get configmaps -l app.kubernetes.io/name=gnmic -o yaml
     ```
 
-9. Restart the gNMIc collector and check the logs again:
+9. Because the ConfigMap name changed, Flux updated the gNMIc StatefulSet and gNMIc restarts automatically. Check the logs again:
 
     ```sh
-    kubectl -n network-monitoring rollout restart statefulset gnmic
+    kubectl -n network-monitoring rollout status statefulset gnmic
     kubectl logs -n network-monitoring gnmic-0
     ```
 
-    The gNMIc container will mount the `gnmic-targets` ConfigMap and initiate a gNMI session to both targets.
-    gNMIc will subscribe to the `/interfaces/interface` path and the switches will update the counters every 5 seconds.
+    The gNMIc container will mount the new targets ConfigMap and initiate a gNMI session to both targets.
+    gNMIc will subscribe to the interface counters, which the switches send every 5 seconds, and to the interface status, BGP session state and system information, which the switches send when they change.
     Prometheus is configured to scrape the `/metrics` endpoint that is exposed by the gNMIc container every 5 seconds also:
 
     You can check the ServiceMonitor that instructs Prometheus to scrape the gNMIc pod by using this command on your Mac:

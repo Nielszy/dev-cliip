@@ -53,10 +53,10 @@ spec:
               name: gnmic-targets
               subPath: targets.gnmic.yaml
       volumes:
-        - secret:
+        - name: gnmic-config
+          configMap:
             defaultMode: 0644
-            secretName: gnmic-config
-          name: gnmic-config
+            name: gnmic-config
         - name: gnmic-targets
           configMap:
             defaultMode: 0644

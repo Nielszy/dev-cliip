@@ -3,8 +3,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - network-monitoring-namespace.yaml
-  - gnmic/gnmic-config-files/gnmic-config-sealedSecret.yaml
-  - gnmic/gnmic-config-files/gnmic-targets-configMap.yaml
   - gnmic/gnmic-config-files/gnmic-env-sealedSecret.yaml
   - gnmic/gnmic-statefulSet.yaml
   - gnmic/gnmic-service.yaml
@@ -12,7 +10,30 @@ resources:
   # - gnmic/jobs/create-gnmic-target-file-configMap.yaml
   # - gnmic/jobs/create-gnmic-target-file-credentials-sealedSecret.yaml
   # - gnmic/jobs/create-gnmic-target-file-cronJob.yaml
+  - prometheus-alerting-rules/gnmi-monitoring-prometheusRule.yaml
+# The gNMIc config and targets are generated with a hash of their content in
+# the name (for example gnmic-config-<hash>). Kustomize updates the references
+# in the gNMIc StatefulSet, so any change to config.gnmic.yaml or
+# targets.gnmic.yaml changes the StatefulSet and restarts gNMIc. gNMIc can't
+# reload subscriptions, processors or outputs without a restart.
 configMapGenerator:
+  # No credentials in this file: they are loaded from the gnmic-env Secret as
+  # environment variables.
+  - name: gnmic-config
+    namespace: network-monitoring
+    files:
+      - gnmic/gnmic-config-files/config.gnmic.yaml
+    options:
+      labels:
+        app.kubernetes.io/name: gnmic
+  # Written by the create-gnmic-target-file CronJob with devices from NetBox.
+  - name: gnmic-targets
+    namespace: network-monitoring
+    files:
+      - gnmic/gnmic-config-files/targets.gnmic.yaml
+    options:
+      labels:
+        app.kubernetes.io/name: gnmic
   # Grafana dashboards. The kube-prometheus-stack Grafana sidecar loads every
   # ConfigMap labelled grafana_dashboard: "1", in any namespace.
   - name: grafana-dashboard-gnmic-network-monitoring
@@ -25,4 +46,4 @@ configMapGenerator:
         grafana_dashboard: "1"
       annotations:
         # Grafana folder, see grafana.sidecar.dashboards.folderAnnotation.
-        grafana_folder: gNMIc
+        grafana_folder: gNMI
