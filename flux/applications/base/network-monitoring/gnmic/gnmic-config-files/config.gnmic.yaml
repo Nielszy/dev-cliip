@@ -1,0 +1,178 @@
+---
+# gNMIc config, deployed as the gnmic-config ConfigMap. Don't put credentials
+# in this file: the target username and password come from the gnmic-env
+# Secret as the GNMIC_USERNAME and GNMIC_PASSWORD environment variables.
+encoding: proto
+log: true
+insecure: true
+
+loader:
+  type: file
+  path: /app/targets.gnmic.yaml
+  interval: 30s
+  enable-metrics: false
+
+# The on-change subscriptions use a heartbeat-interval, so the target
+# resends every value at least every 10s. The prometheus output uses the
+# default expiration (60s), so series that are no longer sent (for example
+# after an interface description change) disappear within 1-2 minutes,
+# while active series survive several missed heartbeats.
+subscriptions:
+  # Interface counters (traffic rate, errors, discards), sampled every 5s.
+  # The description is only used as a label, see interface_description_to_label.
+  arista_interface_counters:
+    paths:
+      - /interfaces/interface/state/counters
+      - /interfaces/interface/ethernet/state/counters
+      - /interfaces/interface/state/description
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+  # Interface oper-status and admin-status, sent by the target whenever
+  # they change. The description is only used as a label, see
+  # interface_description_to_label.
+  arista_interface_status:
+    paths:
+      - /interfaces/interface/state/oper-status
+      - /interfaces/interface/state/admin-status
+      - /interfaces/interface/state/description
+    mode: stream
+    stream-mode: on-change
+    heartbeat-interval: 10s
+  # Static system information, sent when gNMIc connects to a target and
+  # whenever it changes. up-time is not collected because it would freeze;
+  # uptime is calculated from boot-time in Grafana instead.
+  arista_system_info:
+    paths:
+      - /system/state/hostname
+      - /system/state/software-version
+      - /system/state/boot-time
+      - /components/component[name=Chassis]/state/part-no
+      - /components/component[name=Chassis]/state/description
+      - /components/component[name=Chassis]/state/mfg-name
+      - /components/component[name=Chassis]/state/serial-no
+    mode: stream
+    stream-mode: on-change
+    heartbeat-interval: 10s
+  # BGP neighbor session state, sent by the target whenever it changes.
+  arista_bgp:
+    paths:
+      - /network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/state/session-state
+    mode: stream
+    stream-mode: on-change
+    heartbeat-interval: 10s
+
+processors:
+  # Add the interface description as an "interface_description" label to the other
+  # metrics of the same interface and subscription. The value is cached,
+  # so it also applies to on-change updates that don't include the
+  # description. consume removes the description as a metric of its own.
+  interface_description_to_label:
+    event-value-tag-v2:
+      rules:
+        - value-name: "/interfaces/interface/state/description"
+          tag-name: "interface_description"
+          consume: true
+  # Convert the BGP session-state string to a number. With
+  # strings-as-labels, a string value would create a separate series per
+  # state instead of one series whose value changes, which makes alerting
+  # on it unreliable.
+  bgp_session_state_to_number:
+    event-strings:
+      value-names:
+        - ".*/session-state$"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?IDLE$"
+            new: "1"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?CONNECT$"
+            new: "2"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?ACTIVE$"
+            new: "3"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?OPENSENT$"
+            new: "4"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?OPENCONFIRM$"
+            new: "5"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?ESTABLISHED$"
+            new: "6"
+  # Convert the interface oper-status string to a number, for the same
+  # reason as bgp_session_state_to_number. OpenConfig enum order.
+  interface_oper_status_to_number:
+    event-strings:
+      value-names:
+        - ".*/state/oper-status$"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?UP$"
+            new: "1"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?DOWN$"
+            new: "2"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?TESTING$"
+            new: "3"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?UNKNOWN$"
+            new: "4"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?DORMANT$"
+            new: "5"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?NOT_PRESENT$"
+            new: "6"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?LOWER_LAYER_DOWN$"
+            new: "7"
+  # Convert the interface admin-status string to a number, for the same
+  # reason as bgp_session_state_to_number. OpenConfig enum order.
+  interface_admin_status_to_number:
+    event-strings:
+      value-names:
+        - ".*/state/admin-status$"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?UP$"
+            new: "1"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?DOWN$"
+            new: "2"
+        - replace:
+            apply-on: "value"
+            old: "^(.*:)?TESTING$"
+            new: "3"
+
+outputs:
+  prometheus:
+    type: prometheus
+    listen: ":9804"
+    path: /metrics
+    metric-prefix: gnmic
+    debug: false
+    # Export string values (hostname, software version, ...) as labels on
+    # a metric with value 1 instead of dropping them.
+    strings-as-labels: true
+    event-processors:
+      - interface_description_to_label
+      - bgp_session_state_to_number
+      - interface_oper_status_to_number
+      - interface_admin_status_to_number

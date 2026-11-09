@@ -25,8 +25,8 @@ spec:
                 items:
                   - key: create_gnmic_target_file.py
                     path: create_gnmic_target_file.py
-                  - key: gnmic-targets-configMap.yaml.j2
-                    path: gnmic-targets-configMap.yaml.j2
+                  - key: targets.gnmic.yaml.j2
+                    path: targets.gnmic.yaml.j2
           containers:
             - name: create-gnmic-target-file
               image: ghcr.io/nielszy/python:1.0.0
