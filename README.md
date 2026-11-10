@@ -130,7 +130,7 @@ Unless otherwise specified, all commands in this guide should be executed from t
     limactl start lima/dev-cliip-debian-13.yaml
     ```
 
-    After the VM is created, add the following lines to the `~/.ssh/config` file on your Mac (or include them in a sepetae file):
+    After the VM is created, add the following lines to the `~/.ssh/config` file on your Mac (or include them in a seperate file):
 
     ```sh
     Host lima-dev-cliip-debian-13
@@ -233,7 +233,7 @@ Unless otherwise specified, all commands in this guide should be executed from t
       --personal
     ```
 
-    After the Flux bootstrap command reports `all components are healthy`, the Flux controllers will automatically start reconciling all the resources in the `flux` folder onto the dev-cliip cluster. This can take 3 to 10 minutes depending on available bandwidth and compute resources available on your dev-cliip VM.
+    After the Flux bootstrap command reports `all components are healthy`, the Flux controllers will automatically start reconciling all the resources in the `flux` folder onto the dev-cliip cluster. This can take 3 to 10 minutes depending on available bandwidth and compute resources available on your dev-cliip VM (out of all the components, NetBox usually takes the longest to become healthy).
 
     You can check the progress of the reconciliation of all components with the following command:
 
@@ -376,22 +376,22 @@ In the next sections we will provision NetBox with data using Ansible. We will a
 
 ## Enable gNMIc monitoring with dynamic target file creation
 
-In Visual Studio Code on your Mac check out the files in this folder of the dev-cliip project `flux/applications/base/network-monitoring`.
+On your Mac check out the files in this folder of the dev-cliip project `flux/applications/base/network-monitoring`.
 
 Here you see all the K8s manifests that make sure that the `network-monitoring` namespace was created on the dev-cliip cluster and that the gNMIc collector is running in the namespace waiting to do some gNMI monitoring!
 
 ### gNMIC collector configuration
 
-In the `gnmic-config-files` folder the `config.gnmic.yaml` file contains the gNMIc config and the `targets.gnmic.yaml` file contains the devices (targets) gNMIc monitors. Kustomize turns them into the `gnmic-config-<hash>` and `gnmic-targets-<hash>` ConfigMaps (see the `configMapGenerator` in `flux/applications/base/network-monitoring/kustomization.yaml`), which are mounted into the gNMIc container. The hash in the names changes whenever the content changes, so Flux then updates the gNMIc StatefulSet and gNMIc restarts with the new config or targets automatically.
+In the `flux/applications/base/network-monitoring/gnmic/gnmic-config-files` folder, the `config.gnmic.yaml` file contains the gNMIc config and the `targets.gnmic.yaml` file contains the devices (targets) gNMIc monitors. Kustomize turns them into the `gnmic-config-<hash>` and `gnmic-targets-<hash>` ConfigMaps (see the `configMapGenerator` in `flux/applications/base/network-monitoring/kustomization.yaml`), which are mounted into the gNMIc container. The hash in the names changes whenever the content changes, so Flux then updates the gNMIc StatefulSet and gNMIc restarts with the new config or targets automatically.
 
-Run this command to see the running gNMIc pod and to see the logging that it produces:
+Run these commands on your Mac to see the running gNMIc pod and to see the logging that it produces:
 
 ```sh
 kubectl get pods -n network-monitoring
 kubectl logs -n network-monitoring gnmic-0
 ```
 
-As you can see in the logging, gNMIc is not doing a lot because the `targets.gnmic.yaml` file is empty and gNMIc will thus not monitor any devices. We will need to populate that file with the devices that are running in our `dev-clipp-lab01` Containerlab topology.
+As you can see in the logging, the gNMIc collector is not doing a lot because the `targets.gnmic.yaml` file is empty and gNMIc will thus not monitor any devices. We will need to populate that file with the devices that are running in our `dev-clipp-lab01` Containerlab topology.
 
 ## Dynamically populate gNMIc targets ConfigMap
 
@@ -468,7 +468,7 @@ Let's go:
 7. Check the logs from the Job pod. The pod name should start with `create-gnmic-target-file-dev-cliip-guide` and has a specific ID suffix:
 
     ```sh
-    kubectl -n network-monitoring logs create-gnmic-target-file-dev-cliip-guide
+    kubectl -n network-monitoring logs jobs/create-gnmic-target-file-dev-cliip-guide
     ```
 
     The logs should resemble something like:
